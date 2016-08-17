@@ -742,8 +742,21 @@ local function doWork(state)
 	return coroutine.wrap(function() _doWork(state) end)
 end
 
+local function fixupIncludeFilename(state, filename)
+	for i,p in ipairs(state.includePath) do
+		file = io.open(p .. filename, 'r')
+		if file then
+			file:close()
+			return (p .. filename)
+		end
+	end
+	return filename
+end
+
+
+
 local function includeFile(state, filename, next, _local)
-	local result, result_state = lcpp.compileFile(filename, state.defines, state.macro_sources, next, _local)
+	local result, result_state = lcpp.compileFile(fixupIncludeFilename(state, filename), state.defines, state.macro_sources, next, _local)
 	-- now, we take the define table of the sub file for further processing
 	state.defines = result_state.defines
 	-- and return the compiled result	
@@ -1276,10 +1289,17 @@ local function parseFunction(state, input)
 	return name, func, repl
 end
 
+local includePath = { "", "/usr/include/" }
 
 -- ------------
 -- LCPP INTERFACE
 -- ------------
+
+function lcpp.addIncludePath(...)
+	for i=1, select("#",...) do
+		includePath[1+#includePath] = select(i,...)
+	end
+end
 
 --- initialies a lcpp state. not needed manually. handy for testing
 function lcpp.init(input, predefines, macro_sources)
@@ -1291,6 +1311,7 @@ function lcpp.init(input, predefines, macro_sources)
 	state.stack     = {}              -- stores wether the current stack level is to be included
 	state.once      = {}              -- stack level was once true (first if that evals to true)
 	state.macro_sources = macro_sources or {} -- original replacement text for functional macro 
+	state.includePath = includePath		  -- the array of directories to search the files in
 	
 	-- funcs
 	state.define = define
