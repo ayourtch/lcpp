@@ -1403,7 +1403,7 @@ function lcpp.compileFile(filename, predefines, macro_sources, next, _local)
 	if not file then error("file not found: "..filename) end
 	local code = file:read('*a')
 	predefines = predefines or {}
-	predefines[__FILE__] = filename
+	predefines[__FILE__] = '"'..filename..'"'
 	return lcpp.compile(code, predefines, macro_sources)
 end
 
