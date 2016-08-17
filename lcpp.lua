@@ -1268,7 +1268,7 @@ local function parseFunction(state, input)
 		
 	-- build macro funcion
 	local func = function(input)
-		return input:gsub(name.."%s*(%b())", function (match)
+		return input:gsub("^"..name.."%s*(%b())", function (match)
 			return replaceArgs(match, repl)
 		end)
 	end
@@ -1790,6 +1790,11 @@ function lcpp.test(suppressMsg)
 		#define DUP_MACRO_DEF (111)
 		#define DUP_FUNC_MACRO(x, y) x + y
 		#define DUP_FUNC_MACRO(x, y) x + y
+
+		#define LOOPMACRO(v)    (YYYYY)
+		#define _(a) -- LOOPMACRO (bi);  _LOOPMACRO(ai);
+		_ (foo)
+		#undef _
 
 
 		msg = "check #if conditional check"
