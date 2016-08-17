@@ -231,6 +231,7 @@ local FUNCMACRO = STARTL.."("..IDENTIFIER..")%(([_%s%w,]*)%)%s*(.*)"
 lcpp.STATE = {lineno = 0} -- current state for debugging the last operation
 local function error(msg) _G.print(debug.traceback()); _G.error(string.format("lcpp ERR [%04i] %s", lcpp.STATE.lineno, msg)) end
 local function print(msg) _G.print(string.format("lcpp INF [%04i] %s", lcpp.STATE.lineno, msg)) end
+local function errprint(msg) end
 
 -- splits a string using a pattern into a table of substrings
 local function gsplit(str, pat)
@@ -570,7 +571,7 @@ local function apply(state, input)
 								-- on macro name is also used as the symbol of some C declaration
 								-- (e.g. /usr/include/spawn.h, /usr/include/sys/select.h on centos 6.4)
 								-- no need to preprocess.
-								print(v .. ': macro name but used as C declaration in:' .. input)
+								errprint(v .. ': macro name but used as C declaration in:' .. input)
 							end
 						end
 					end
