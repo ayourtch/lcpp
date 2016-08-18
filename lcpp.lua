@@ -1239,21 +1239,49 @@ local function replaceArgs(argsstr, repl)
 	-- print('argsstr:'..argsstr)
 	local comma
 	local arg_acc = ''
-	for k, v, start, end_ in tokenizer(argsstr, LCPP_TOKENIZE_MACRO_ARGS) do
+        local ign_acc = ''
+	local br_nest_level = 0
+	for k, v, start, end_ in tokenizer(argsstr, LCPP_TOKENIZE_EXPR) do
 		-- print("replaceArgs:" .. k .. "|" .. v)
-		if k == "ARGS" or k == "PARENTHESE" or k == "STRING_LITERAL" or 
-			k == "FUNCTIONAL" or k == "SINGLE_CHARACTER_ARGS" then
-			arg_acc = arg_acc..v
+		if k == "BROPEN" then
+			br_nest_level = br_nest_level + 1
 			comma = false
-		elseif k == "COMMA" then
-			if comma then
-				-- continued comma means empty parameter
-				table.insert(args, "")
+		end
+		-- print("br_nest_level:"..tostring(br_nest_level))
+		if br_nest_level == 0 then
+			if (k == "COMMA") or ((k == "unknown") and (v == ",")) then
+				-- print("replaceArgs:comma")
+				if comma then
+					-- continued comma means empty parameter
+					-- print("replaceArgs: empty arg")
+					table.insert(args, "")
+				else
+					table.insert(args, arg_acc)
+					-- print("replaceArgs:insert arg:"..arg_acc)
+					arg_acc = ''
+					ign_acc = ''
+				end
+				comma = true
+			elseif (k == "ignore") then
+				ign_acc = ign_acc..v
+				comma = false
 			else
-				table.insert(args, arg_acc)
-				arg_acc = ''
+				if (#arg_acc > 0) and (#ign_acc > 0) then
+					-- print("arg_acc|ign_acc:"..arg_acc.."|"..ign_acc.."|")
+					arg_acc = arg_acc .. ign_acc
+				end
+				ign_acc = ''
+				-- print("Append to arg_acc:" .. arg_acc .."|"..v)
+				arg_acc = arg_acc..v
+				comma = false
 			end
-			comma = true
+		else
+			-- print("Append to arg_acc:" .. arg_acc .."|"..v)
+			arg_acc = arg_acc..v
+		end
+		if k == "BRCLOSE" then
+			br_nest_level = br_nest_level - 1
+			comma = false
 		end
 	end
 	table.insert(args, arg_acc)
